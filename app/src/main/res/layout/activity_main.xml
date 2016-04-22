@@ -14,5 +14,6 @@
         android:layout_height="wrap_content"
         android:text="Authenticate"
         android:id="@+id/auth_butt"
+        android:onClick="authClick"
         />
 </RelativeLayout>

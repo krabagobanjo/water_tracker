@@ -10,4 +10,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
+    public void authClick(View view) {
+        startActivity(new Intent(this, Auth_Activity.class));
+    }
 }
