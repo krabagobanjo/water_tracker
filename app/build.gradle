@@ -1,0 +1,35 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        applicationId "edu.gatech.watertracker"
+        minSdkVersion 19
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:23.3.0'
+    compile('com.wu-man:android-oauth-client:0.4.5@aar') {
+        exclude group: 'org.codehaus.jackson'
+    }
+    compile('com.google.api-client:google-api-client-android:1.15.0-rc') {
+        exclude group: 'com.google.android.google-play-services', module: 'google-play-services'
+        exclude group: 'junit', module: 'junit'
+        exclude group: 'com.google.android', module: 'android'
+    }
+    compile 'com.google.http-client:google-http-client-jackson:1.21.0'
+}
