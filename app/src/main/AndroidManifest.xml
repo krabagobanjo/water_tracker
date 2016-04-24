@@ -16,6 +16,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".Auth_Activity"></activity>
+        <activity android:name=".Sync_Activity"></activity>
     </application>
 
 </manifest>
