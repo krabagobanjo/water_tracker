@@ -243,7 +243,6 @@ public class UartActivity extends UartInterfaceActivity implements BleManager.Bl
             sendData(data);
             mSentBytes += data.length();
         }
-
         // Add to current buffer
         UartDataChunk dataChunk = new UartDataChunk(System.currentTimeMillis(), UartDataChunk.TRANSFERMODE_TX, data);
         mDataBuffer.add(dataChunk);

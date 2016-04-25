@@ -45,9 +45,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
-
-
 public class MainBleActivity extends AppCompatActivity implements BleManager.BleManagerListener, BleUtils.ResetBluetoothAdapterListener {
     // Constants
     private final static String TAG = MainBleActivity.class.getSimpleName();
@@ -463,6 +460,13 @@ public class MainBleActivity extends AppCompatActivity implements BleManager.Ble
             Log.w(TAG, "onClickDeviceConnect index does not exist: " + scannedDeviceIndex);
         }
     }
+    private void stopScanning() {
+        // Stop scanning
+        if (mScanner != null) {
+            mScanner.stop();
+            mScanner = null;
+        }
+    }
 
     public void onClickScan(View view) {
         boolean isScanning = mScanner != null && mScanner.isScanning();
@@ -542,15 +546,7 @@ public class MainBleActivity extends AppCompatActivity implements BleManager.Ble
         updateUI();
     }
 
-    private void stopScanning() {
-        // Stop scanning
-        if (mScanner != null) {
-            mScanner.stop();
-            mScanner = null;
-        }
 
-        updateUI();
-    }
     // endregion
 
     private void decodeScanRecords(BluetoothDeviceData deviceData) {

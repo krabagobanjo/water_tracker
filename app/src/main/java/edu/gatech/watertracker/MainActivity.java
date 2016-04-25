@@ -18,6 +18,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void syncClick(View view) {
-        startActivity(new Intent(this, UartActivity.class));
+        startActivity(new Intent(this, Sync_Activity.class));
     }
 }
