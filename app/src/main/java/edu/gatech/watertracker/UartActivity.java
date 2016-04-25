@@ -33,14 +33,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import edu.gatech.watertracker.R;
 import com.adafruit.bluefruit.le.connect.app.UartDataChunk;
-import com.adafruit.bluefruit.le.connect.app.settings.ConnectedSettingsActivity;
-import com.adafruit.bluefruit.le.connect.app.settings.MqttUartSettingsActivity;
-import com.adafruit.bluefruit.le.connect.app.settings.PreferencesFragment;
 import com.adafruit.bluefruit.le.connect.ble.BleManager;
-import com.adafruit.bluefruit.le.connect.mqtt.MqttManager;
-import com.adafruit.bluefruit.le.connect.mqtt.MqttSettings;
 import com.adafruit.bluefruit.le.connect.app.UartInterfaceActivity;
 
 import java.nio.charset.Charset;
@@ -163,7 +157,7 @@ public class UartActivity extends UartInterfaceActivity implements BleManager.Bl
         mReceivedBytesTextView = (TextView) findViewById(R.id.receivedBytesTextView);
 
         // Read shared preferences
-        maxPacketsToPaintAsText = PreferencesFragment.getUartTextMaxPackets(this);
+        maxPacketsToPaintAsText = 1000;
         //Log.d(TAG, "maxPacketsToPaintAsText: "+maxPacketsToPaintAsText);
 
         // Read local preferences
@@ -389,7 +383,6 @@ public class UartActivity extends UartInterfaceActivity implements BleManager.Bl
                 return true;
 
             case R.id.action_connected_settings:
-                startConnectedSettings();
                 return true;
 
             case R.id.action_refreshcache:
@@ -399,8 +392,6 @@ public class UartActivity extends UartInterfaceActivity implements BleManager.Bl
                 break;
 
             case R.id.action_mqttsettings:
-                Intent intent = new Intent(this, MqttUartSettingsActivity.class);
-                startActivityForResult(intent, kActivityRequestCode_MqttSettingsActivity);
                 break;
 
             case R.id.action_displaymode_timestamp:
@@ -439,12 +430,6 @@ public class UartActivity extends UartInterfaceActivity implements BleManager.Bl
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private void startConnectedSettings() {
-        // Launch connected settings activity
-        Intent intent = new Intent(this, ConnectedSettingsActivity.class);
-        startActivityForResult(intent, kActivityRequestCode_ConnectedSettingsActivity);
     }
 
     @Override

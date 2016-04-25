@@ -26,7 +26,7 @@ public class CustomKeyboard {
     // Data
     private KeyboardView mKeyboardView;
     private Activity mActivity;
-    private int mCurrentKeyboardId;
+    private Integer mCurrentKeyboardId;
 
     public CustomKeyboard(Activity activity) {
         mActivity = activity;
