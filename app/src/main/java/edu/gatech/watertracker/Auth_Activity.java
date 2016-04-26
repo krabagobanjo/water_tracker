@@ -160,6 +160,7 @@ public class Auth_Activity extends FragmentActivity {
             }
         }
 
+        //This is where the token is
         @Override
         public void onLoadFinished(Loader<Result<Credential>> loader,
                                    Result<Credential> result) {
