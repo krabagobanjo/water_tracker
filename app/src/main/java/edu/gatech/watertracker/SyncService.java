@@ -1,44 +1,46 @@
 package edu.gatech.watertracker;
 
+import android.app.IntentService;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.SystemClock;
-import android.support.v7.app.AppCompatActivity;
+import android.bluetooth.BluetoothGattService;
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import com.adafruit.bluefruit.le.connect.app.UartDataChunk;
-import com.adafruit.bluefruit.le.connect.app.UartInterfaceActivity;
 import com.adafruit.bluefruit.le.connect.ble.BleDevicesScanner;
 import com.adafruit.bluefruit.le.connect.ble.BleManager;
 import com.adafruit.bluefruit.le.connect.ble.BleUtils;
 
 import java.nio.charset.Charset;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.UUID;
 
 /**
- * Created by ngraves3 on 4/24/16.
+ * Created by ngraves3 on 4/25/16.
  */
-public class Sync_Activity extends UartInterfaceActivity implements BleManager.BleManagerListener, BleUtils.ResetBluetoothAdapterListener  {
+public class SyncService extends IntentService implements BleManager.BleManagerListener {
 
-    private final static String TAG = Sync_Activity.class.getSimpleName();
+    private final static String TAG  = SyncService.class.getSimpleName();
+
+    public static final String UUID_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+    public static final String UUID_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+    public static final String UUID_TX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+    public static final String UUID_DFU = "00001530-1212-EFDE-1523-785FEABCD123";
+    public static final int kTxMaxCharacters = 20;
+
     private boolean mIsScanPaused = true;
+
+    private boolean mIsScanning = true;
+
     private BleDevicesScanner mScanner;
 
     private ArrayList<BluetoothDeviceData> mScannedDevices;
-    private BluetoothDeviceData mSelectedDeviceData;
-    private Class<?> mComponentToStartWhenConnected = UartActivity.class;
 
-    private volatile int mSentBytes;
     private volatile ArrayList<UartDataChunk> mDataBuffer;
 
     private boolean mIsEolEnabled;
@@ -46,25 +48,46 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
     private int mReceivedBytes;
 
     private String mTargetDeviceName = "Adafruit Bluefruit LE";
-    private BluetoothDevice targetDevice;
+    private BluetoothDevice mTargetDevice;
+
+    // Data
+    protected BleManager mBleManager;
+    protected BluetoothGattService mUartService;
+
+    /**
+     * Creates an IntentService.  Invoked by your subclass's constructor.
+     *
+     */
+    public SyncService() {
+        super("edu.gatech.watertracker.SyncService");
+        Log.d(TAG, "SyncService starting");
+
+        mIsScanning = false;
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sync);
+    protected void onHandleIntent(Intent intent) {
         mBleManager = BleManager.getInstance(this);
         mBleManager.setBleListener(this);
-        mSentBytes = 0;
         mReceivedBytes = 0;
         mIsEolEnabled = false;
         mDataBuffer = new ArrayList<>();
-        // Maybe launch a background task instead?
-        startScan(null, mTargetDeviceName);
+        while (true) {
+            // mIsScanning will be reset by onDisconnected
+            if (!mIsScanning) {
+                mIsScanning = true;
+                startScan(null, mTargetDeviceName);
+            }
+        }
     }
 
     @Override
     public void onConnected() {
         Log.d(TAG, "onConnected");
+
+        if (mUartService != null) { // Indicates we have discovered services.
+            //initSyncDevice();
+        }
     }
 
     @Override
@@ -75,6 +98,10 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
     @Override
     public void onDisconnected() {
         Log.d(TAG, "onDisconnected");
+        mBleManager.disconnect();
+        mBleManager.close();
+        stopScanning();
+        mIsScanning = false;
     }
 
     @Override
@@ -82,10 +109,9 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
         Log.d(TAG, "onServicesDiscovered");
         mUartService = mBleManager.getGattService(UUID_SERVICE);
         mBleManager.enableNotification(mUartService, UUID_RX, true);
-        Log.d(TAG, "Pausing scan; Doing UART stuff...");
+        Log.d(TAG, "Doing UART stuff...");
 
-        // Initialize sync.
-        uartSendData("S", false);
+        initSyncDevice();
     }
 
     @Override
@@ -99,21 +125,39 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
 
                 mReceivedBytes += bytes.length;
 
-                final UartDataChunk dataChunk = new UartDataChunk(System.currentTimeMillis(), UartDataChunk.TRANSFERMODE_RX, data);
+                UartDataChunk dataChunk = new UartDataChunk(System.currentTimeMillis(), UartDataChunk.TRANSFERMODE_RX, data);
                 mDataBuffer.add(dataChunk);
 
                 // Debug: print the data received.
                 //        Maybe dump the data into something else after receiving it?
-                //        Banjo can answer this question better.
+                //        Banjo tcan answer this question better.
                 for (UartDataChunk udc : mDataBuffer) {
                     Log.d(TAG, udc.getData());
                 }
 
-                // Ack the data received.
-                uartSendData("A", false);
+                ackDevice();
+
+                // We can either post the data to fitbit immediately, or we can wait for a certain
+                // number of ounces/chunks.
             }
         }
     }
+
+    private void initSyncDevice() {
+        uartSendData("S");
+    }
+
+    private void ackDevice() {
+        uartSendData("A");
+        try {
+            Thread.sleep(500);
+        } catch (Exception e) {
+            // Do nothing.
+        }
+
+        mBleManager.disconnect();
+    }
+
 
     @Override
     public void onDataAvailable(BluetoothGattDescriptor descriptor) {
@@ -124,12 +168,6 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
     @Override
     public void onReadRemoteRssi(int rssi) {
 
-    }
-
-    @Override
-    public void resetBluetoothCompleted() {
-        Log.d(TAG, "Reset completed -> Resume scanning");
-        resumeScanning();
     }
 
     private boolean connect(BluetoothDevice device) {
@@ -149,7 +187,7 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
         Log.d(TAG, "startScan");
 
         // Stop current scanning (if needed)
-        stopScanning();
+        //stopScanning();
 
         // Configure scanning
         BluetoothAdapter bluetoothAdapter = BleUtils.getBluetoothAdapter(getApplicationContext());
@@ -160,35 +198,16 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
                 @Override
                 public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
                     final String deviceName = device.getName();
-                    //Log.d(TAG, "Discovered device: " + (deviceName != null ? deviceName : "<unknown>"));
 
-                    BluetoothDeviceData previouslyScannedDeviceData = null;
-                    if (deviceNameToScanFor == null || (deviceName != null && deviceName.equalsIgnoreCase(deviceNameToScanFor))) {       // Workaround for bug in service discovery. Discovery filtered by service uuid is not working on Android 4.3, 4.4
-                        if (mScannedDevices == null) mScannedDevices = new ArrayList<>();       // Safeguard
-
-                        // Check that the device was not previously found
-                        for (BluetoothDeviceData deviceData : mScannedDevices) {
-                            if (deviceData.device.getAddress().equals(device.getAddress())) {
-                                previouslyScannedDeviceData = deviceData;
-                                break;
-                            }
-                        }
-
-                        BluetoothDeviceData deviceData;
-                        if (previouslyScannedDeviceData == null) {
-                            // Add it to the mScannedDevice list
-                            deviceData = new BluetoothDeviceData();
-                            mScannedDevices.add(deviceData);
-                        } else {
-                            deviceData = previouslyScannedDeviceData;
-                        }
+                    if (deviceName != null && deviceName.equalsIgnoreCase(deviceNameToScanFor)) {       // Workaround for bug in service discovery. Discovery filtered by service uuid is not working on Android 4.3, 4.4
+                        BluetoothDeviceData deviceData = new BluetoothDeviceData();
 
                         deviceData.device = device;
                         deviceData.rssi = rssi;
                         deviceData.scanRecord = scanRecord;
                         decodeScanRecords(deviceData);
 
-                        targetDevice = device;
+                        mTargetDevice = device;
                         connect(device);
                     }
                 }
@@ -199,7 +218,6 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
         }
     }
 
-
     private void stopScanning() {
         // Stop scanning
         Log.d(TAG, "Stopping scan");
@@ -209,6 +227,26 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
         }
     }
 
+    // region Send Data to UART
+    protected void sendData(String text) {
+        final byte[] value = text.getBytes(Charset.forName("UTF-8"));
+        sendData(value);
+    }
+
+
+    protected void sendData(byte[] data) {
+        if (mUartService != null) {
+            // Split the value into chunks (UART service has a maximum number of characters that can be written )
+            for (int i = 0; i < data.length; i += kTxMaxCharacters) {
+                final byte[] chunk = Arrays.copyOfRange(data, i, Math.min(i + kTxMaxCharacters, data.length));
+                mBleManager.writeService(mUartService, UUID_TX, chunk);
+            }
+        } else {
+            Log.w(TAG, "Uart Service not discovered. Unable to send data");
+        }
+    }
+
+    // Nick: I'm not entirely sure why we need this method, but I think it does something.
     private void decodeScanRecords(BluetoothDeviceData deviceData) {
         // based on http://stackoverflow.com/questions/24003777/read-advertisement-packet-in-android
         final byte[] scanRecord = deviceData.scanRecord;
@@ -278,7 +316,7 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
         // Check if Uart is contained in the uuids
         boolean isUart = false;
         for (UUID uuid : uuids) {
-            if (uuid.toString().equalsIgnoreCase(UartInterfaceActivity.UUID_SERVICE)) {
+            if (uuid.toString().equalsIgnoreCase(UUID_SERVICE)) {
                 isUart = true;
                 break;
             }
@@ -292,22 +330,15 @@ public class Sync_Activity extends UartInterfaceActivity implements BleManager.B
 
     // region UART stuff
 
-    private void uartSendData(String data, boolean wasReceivedFromMqtt) {
-
+    private void uartSendData(String data) {
         // Add eol
         if (mIsEolEnabled) {
             // Add newline character if checked
             data += "\n";
         }
-
         // Send to uart
-        if (!wasReceivedFromMqtt) {
-            sendData(data);
-            mSentBytes += data.length();
-        }
+        sendData(data);
     }
-
-
 
     private class BluetoothDeviceData {
         public BluetoothDevice device;
