@@ -9,19 +9,12 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
 import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.api.client.http.GenericUrl;
-import com.google.api.client.util.Lists;
 import com.wuman.android.auth.AuthorizationDialogController;
 import com.wuman.android.auth.AuthorizationFlow;
 import com.wuman.android.auth.DialogFragmentController;
@@ -34,13 +27,15 @@ import com.wuman.android.auth.oauth2.store.SharedPreferencesCredentialStore;
 import edu.gatech.watertracker.AsyncResourceLoader.Result;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 
 public class Auth_Activity extends FragmentActivity {
 
+    static final Logger LOGGER = Logger.getAnonymousLogger();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+//        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
 
         FragmentManager fm = getSupportFragmentManager();
@@ -49,6 +44,7 @@ public class Auth_Activity extends FragmentActivity {
             OAuthFragment list = new OAuthFragment();
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
+        LOGGER.info("Test4");
 
     }
     public static class OAuthFragment extends Fragment implements
@@ -66,28 +62,6 @@ public class Auth_Activity extends FragmentActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setHasOptionsMenu(true);
-        }
-
-        @Override
-        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-            super.onCreateOptionsMenu(menu, inflater);
-//            inflater.inflate(R.menu.delete_cookies_menu, menu);
-        }
-
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-//            switch (item.getItemId()) {
-//                case R.id.delete_cookies: {
-//                    CookieSyncManager.createInstance(getActivity());
-//                    CookieManager cookieManager = CookieManager.getInstance();
-//                    cookieManager.removeAllCookie();
-//                    return true;
-//                }
-//                default: {
-//                    return super.onOptionsItemSelected(item);
-//                }
-//            }
-            return false;
         }
 
         @Override
@@ -143,7 +117,7 @@ public class Auth_Activity extends FragmentActivity {
                     new ClientParametersAuthentication(Auth_Constants.CLIENT_ID, null),
                     Auth_Constants.CLIENT_ID,
                     Auth_Constants.AUTH_URL)
-                    .setScopes(Lists.<String> newArrayList())
+                    .setScopes(Auth_Constants.SCOPES)
                     .setCredentialStore(credentialStore)
                     .build();
             // setup UI controller
@@ -202,7 +176,6 @@ public class Auth_Activity extends FragmentActivity {
                 }
             } else {
                 setButtonText(R.string.get_token);
-//                Crouton.makeText(getActivity(), result.errorMessage, Style.ALERT).show();
             }
             getActivity().setProgressBarIndeterminateVisibility(false);
             button.setEnabled(true);
@@ -238,10 +211,11 @@ public class Auth_Activity extends FragmentActivity {
 
             @Override
             public Credential loadResourceInBackground() throws Exception {
+                LOGGER.info("Authorizing");
                 Credential credential =
-                        oauth.authorizeImplicitly(getContext().getString(R.string.token_fitbit_implicit),
+                        oauth.authorizeImplicitly(getContext().getString(R.string.get_token),
                                 null, null).getResult();
-//                LOGGER.info("token: " + credential.getAccessToken());
+                LOGGER.info("token: " + credential.getAccessToken());
                 return credential;
             }
 
@@ -266,9 +240,9 @@ public class Auth_Activity extends FragmentActivity {
 
             @Override
             public Credential loadResourceInBackground() throws Exception {
-                success = oauth.deleteCredential(getContext().getString(R.string.token_fitbit_implicit),
+                success = oauth.deleteCredential(getContext().getString(R.string.get_token),
                         null, null).getResult();
-//                LOGGER.info("token deleted: " + success);
+                LOGGER.info("token deleted: " + success);
                 return null;
             }
 

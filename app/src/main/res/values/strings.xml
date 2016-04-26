@@ -13,7 +13,8 @@
     <string name="action_about">About</string>
     <string name="get_token">Get Token</string>
     <string name="delete_token">Delete Token</string>
-    <string name="token_fitbit_implicit">fitbit</string>
+    <string name="token_fitbit_explicit">fitbit</string>
+    <string name="authenticate">Authenticate</string>
 
     <!-- Bluetooth Adapter -->
     <string name="dialog_error_no_ble">Bluetooth Low Energy not supported</string>
