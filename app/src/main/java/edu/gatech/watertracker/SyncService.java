@@ -114,6 +114,7 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
         mBleManager.close();
         stopScanning();
         mIsScanning = false;
+        mBleManager = BleManager.getInstance(this);
     }
 
     @Override
@@ -216,7 +217,12 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
         }
 
         String units = (parsed.length >= 2) ? parsed[1].trim() : DEFAULT_UNITS;
-        double volume = Double.parseDouble(parsed[0]);
+        double volume;
+        try {
+            volume = Double.parseDouble(parsed[0]);
+        } catch (NumberFormatException oops) {
+            volume = 0;
+        }
 
         return new Pair<>(volume, units);
     }
