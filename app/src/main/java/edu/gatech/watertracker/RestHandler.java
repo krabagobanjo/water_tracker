@@ -45,7 +45,7 @@ public class RestHandler {
         }
     }
     
-    public JSONObject parseMbedString(String mbedString) {
+    public JSONObject parseMbedString(double amt, String units) {
         //TODO forreal
         JSONObject ret = new JSONObject();
         try {

@@ -1,5 +1,6 @@
 package edu.gatech.watertracker;
 
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
@@ -12,8 +13,8 @@ public class RestActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rest);
-        rest = new RestHandler();
-        int resp = rest.post(rest.parseMbedString("str"), Auth_Constants.auth_token);
-        LOGGER.info("Response: " + resp);
+//        rest = new RestHandler();
+//        int resp = rest.post(rest.parseMbedString(0.0, "str"), Auth_Constants.auth_token);
+//        LOGGER.info("Response: " + resp);
     }
 }
