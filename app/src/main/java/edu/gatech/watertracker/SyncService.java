@@ -140,17 +140,30 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
                 mReceivedBytes += bytes.length;
 
                 UartDataChunk dataChunk = new UartDataChunk(System.currentTimeMillis(), UartDataChunk.TRANSFERMODE_RX, data);
+                Log.d(TAG, dataChunk.getData());
+                for (int i = 0; i < dataChunk.getData().length(); i++) {
+                    char c = dataChunk.getData().charAt(i);
+                    int cast = (int) c;
+                    Log.d(TAG, cast + "");
+                }
+
                 mDataBuffer.add(parseRawDeviceResponse(dataChunk.getData()));
 
                 ackDevice();
 
                 if (isReadyToPost()) {
+                    Log.d(TAG, "Posting data");
                     double totalVolume = getTotalVolume(DEFAULT_UNITS);
+                    Log.d(TAG, "Total volume consumed: " + totalVolume);
                     JSONObject params = convertToJSON(totalVolume, DEFAULT_UNITS);
 
                     RestHandler rest = new RestHandler();
-                    if (rest.post(params, Auth_Constants.auth_token) != -1) {
+                    int respCode = rest.post(params, Auth_Constants.auth_token);
+                    if (respCode != -1) {
+                        Log.d(TAG, "Post successful");
                         mDataBuffer.clear();
+                    } else {
+                        Log.d(TAG, "Error in posting: " + respCode);
                     }
                 }
 
@@ -204,7 +217,7 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
             return new Pair<>(DEFAULT_VOLUME, DEFAULT_UNITS);
         }
 
-        String units = (parsed.length >= 2) ? parsed[1] : DEFAULT_UNITS;
+        String units = (parsed.length >= 2) ? parsed[1].trim() : DEFAULT_UNITS;
         double volume = Double.parseDouble(parsed[0]);
 
         return new Pair<>(volume, units);
@@ -213,10 +226,11 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
     private JSONObject convertToJSON(double amount, String unit) {
         JSONObject retval = new JSONObject();
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String dateString = sdf.format(new Date());
 
             retval.put("date", dateString);
+            Log.d(TAG, "Date: " + dateString);
             retval.put("amount", amount);
             retval.put("unit", unit);
 

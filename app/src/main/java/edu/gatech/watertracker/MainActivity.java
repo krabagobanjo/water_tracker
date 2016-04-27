@@ -17,14 +17,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Bundle extras = getIntent().getExtras();
-        if (extras != null) {
-            boolean authenticated = extras.getBoolean("authenticated");
-            mAuthenticated = authenticated;
-        }
-
+        mAuthenticated = Auth_Constants.auth_token != null;
         Button syncButton = (Button) findViewById(R.id.sync_button);
-        //syncButton.setEnabled(mAuthenticated);
+        syncButton.setEnabled(mAuthenticated);
     }
 
     public void authClick(View view) {
