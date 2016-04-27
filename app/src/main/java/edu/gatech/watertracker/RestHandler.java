@@ -53,7 +53,6 @@ public class RestHandler {
             writer.write(urlParams);
             writer.flush();
             writer.close();
-            //out.write(toSend);
             out.close();
             conn.connect();
             int respCode = conn.getResponseCode();
@@ -67,20 +66,7 @@ public class RestHandler {
         }
     }
     
-    public JSONObject parseMbedString(double amt, String units) {
-        //TODO forreal
-        JSONObject ret = new JSONObject();
-        try {
-            ret.put("amount", 10.0);
-            ret.put("date", "2016-04-26");
-            ret.put("unit", "fl oz");
-        } catch (JSONException e) {
-            //this shouldn't happen
 
-        }
-
-        return ret;
-    }
     
     
     

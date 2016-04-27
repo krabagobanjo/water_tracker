@@ -15,7 +15,6 @@ import java.util.logging.Logger;
 
 public abstract class AsyncResourceLoader<T> extends AsyncTaskLoader<Result<T>> {
 
-//    static final Logger LOGGER = Logger.getLogger(SamplesConstants.TAG);
 
     Result<T> mResult;
 
@@ -30,7 +29,6 @@ public abstract class AsyncResourceLoader<T> extends AsyncTaskLoader<Result<T>> 
             result.data = loadResourceInBackground();
             updateErrorStateIfApplicable(result);
         } catch (Exception e) {
-//            LOGGER.log(Level.WARNING, "loadInBackground thrown error", e);
             StackTraceElement t = e.getStackTrace()[0];
             result.success = false;
             if (e instanceof LenientTokenResponseException) {

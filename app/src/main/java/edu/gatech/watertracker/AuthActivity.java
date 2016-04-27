@@ -29,12 +29,11 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 
-public class Auth_Activity extends FragmentActivity {
+public class AuthActivity extends FragmentActivity {
 
     static final Logger LOGGER = Logger.getAnonymousLogger();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-//        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
 
         FragmentManager fm = getSupportFragmentManager();
@@ -53,9 +52,6 @@ public class Auth_Activity extends FragmentActivity {
         private static final int LOADER_DELETE_TOKEN = 1;
 
         private OAuthManager oauth;
-
-//        private Button button;
-//        private TextView message;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -93,11 +89,11 @@ public class Auth_Activity extends FragmentActivity {
                     BearerToken.authorizationHeaderAccessMethod(),
                     OAuth.HTTP_TRANSPORT,
                     OAuth.JSON_FACTORY,
-                    new GenericUrl(Auth_Constants.TOKEN_URL),
-                    new ClientParametersAuthentication(Auth_Constants.CLIENT_ID, null),
-                    Auth_Constants.CLIENT_ID,
-                    Auth_Constants.AUTH_URL)
-                    .setScopes(Auth_Constants.SCOPES)
+                    new GenericUrl(AuthConstants.TOKEN_URL),
+                    new ClientParametersAuthentication(AuthConstants.CLIENT_ID, null),
+                    AuthConstants.CLIENT_ID,
+                    AuthConstants.AUTH_URL)
+                    .setScopes(AuthConstants.SCOPES)
                     .setCredentialStore(credentialStore)
                     .build();
             // setup UI controller
@@ -105,7 +101,7 @@ public class Auth_Activity extends FragmentActivity {
                      new DialogFragmentController(getFragmentManager(), fullScreen) {
                         @Override
                         public String getRedirectUri() throws IOException {
-                            return Auth_Constants.REDIRECT_URL;
+                            return AuthConstants.REDIRECT_URL;
                         }
 
                         @Override
@@ -130,7 +126,6 @@ public class Auth_Activity extends FragmentActivity {
 
         @Override
         public Loader<Result<Credential>> onCreateLoader(int id, Bundle args) {
-//            getActivity().setProgressBarIndeterminateVisibility(true);
             if (id == LOADER_GET_TOKEN) {
                 return new GetTokenLoader(getActivity(), oauth);
             } else {
@@ -144,7 +139,7 @@ public class Auth_Activity extends FragmentActivity {
                                    Result<Credential> result) {
             if (result != null && result.data != null) {
                 String auth_tok = result.data.getAccessToken();
-                Auth_Constants.auth_token = auth_tok;
+                AuthConstants.auth_token = auth_tok;
                 Intent intent = new Intent(getActivity(), MainActivity.class);
                 startActivity(intent);
                 getActivity().finish();

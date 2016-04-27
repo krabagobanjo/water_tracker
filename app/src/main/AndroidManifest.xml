@@ -19,14 +19,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Auth_Activity" />
+        <activity android:name=".AuthActivity" />
         <activity android:name=".UartActivity" />
 
         <service
             android:name=".SyncService"
             android:exported="false" />
 
-        <activity android:name=".RestActivity"></activity>
     </application>
 
 </manifest>

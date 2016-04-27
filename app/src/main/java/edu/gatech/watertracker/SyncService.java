@@ -6,9 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
-import android.content.Context;
 import android.content.Intent;
-import android.text.format.DateFormat;
 import android.util.Log;
 import android.util.Pair;
 
@@ -158,7 +156,7 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
                     JSONObject params = convertToJSON(totalVolume, DEFAULT_UNITS);
 
                     RestHandler rest = new RestHandler();
-                    int respCode = rest.post(params, Auth_Constants.auth_token);
+                    int respCode = rest.post(params, AuthConstants.auth_token);
                     if (respCode != -1) {
                         Log.d(TAG, "Post successful");
                         mDataBuffer.clear();

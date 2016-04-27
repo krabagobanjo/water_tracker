@@ -17,13 +17,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mAuthenticated = Auth_Constants.auth_token != null;
+        mAuthenticated = AuthConstants.auth_token != null;
         Button syncButton = (Button) findViewById(R.id.sync_button);
         syncButton.setEnabled(mAuthenticated);
     }
 
     public void authClick(View view) {
-        startActivity(new Intent(this, Auth_Activity.class));
+        startActivity(new Intent(this, AuthActivity.class));
     }
 
     public void syncClick(View view) {
