@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.Intent;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.util.Pair;
 
@@ -16,9 +17,14 @@ import com.adafruit.bluefruit.le.connect.ble.BleDevicesScanner;
 import com.adafruit.bluefruit.le.connect.ble.BleManager;
 import com.adafruit.bluefruit.le.connect.ble.BleUtils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -34,6 +40,10 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
     public static final String UUID_DFU = "00001530-1212-EFDE-1523-785FEABCD123";
     public static final int kTxMaxCharacters = 20;
 
+    private static final String DEFAULT_UNITS = "fl oz";
+    private static final double DEFAULT_VOLUME = 0.0;
+    private static final int N_POST_THRESHOLD = 10;
+
     private boolean mIsScanPaused = true;
 
     private boolean mIsScanning = true;
@@ -42,7 +52,7 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
 
     private ArrayList<BluetoothDeviceData> mScannedDevices;
 
-    private volatile ArrayList<UartDataChunk> mDataBuffer;
+    private volatile ArrayList<Pair<Double, String>> mDataBuffer;
 
     private boolean mIsEolEnabled;
 
@@ -55,6 +65,8 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
     protected BleManager mBleManager;
     protected BluetoothGattService mUartService;
 
+    private Date mLastPost;
+
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
      *
@@ -64,6 +76,7 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
         Log.d(TAG, "SyncService starting");
 
         mIsScanning = false;
+        mLastPost = new Date(0L); // make this our initial date so we always post the first time.
     }
 
     @Override
@@ -127,18 +140,18 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
                 mReceivedBytes += bytes.length;
 
                 UartDataChunk dataChunk = new UartDataChunk(System.currentTimeMillis(), UartDataChunk.TRANSFERMODE_RX, data);
-                mDataBuffer.add(dataChunk);
-
-                // Debug: print the data received.
-                //        Maybe dump the data into something else after receiving it?
-                //        Banjo tcan answer this question better.
-                for (UartDataChunk udc : mDataBuffer) {
-                    Log.d(TAG, udc.getData());
-                    Pair<Double, String> parsed = parseRawDeviceResponse(udc.getData());
-                    Log.d(TAG, parsed.first.toString() + parsed.second);
-                }
+                mDataBuffer.add(parseRawDeviceResponse(dataChunk.getData()));
 
                 ackDevice();
+
+                if (isReadyToPost()) {
+                    double totalVolume = getTotalVolume(DEFAULT_UNITS);
+                    JSONObject params = convertToJSON(totalVolume, DEFAULT_UNITS);
+                    // Insert RestHandler here.
+                    // ...
+                    // if (post.isSuccessful())
+                    mDataBuffer.clear();
+                }
 
                 // We can either post the data to fitbit immediately, or we can wait for a certain
                 // number of ounces/chunks.
@@ -146,25 +159,71 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
         }
     }
 
+    /**
+     * We want to post a new request if one of the two conditions are met:
+     *   1. We have more than N data points in our buffer.
+     *   2. It has been over 30 seconds since our last post.
+     * @return whether or not to send a new post request.
+     */
+    private boolean isReadyToPost() {
+        long now = System.currentTimeMillis();
+        if (mLastPost.getTime() + (1000 * 30) < now || mDataBuffer.size() > N_POST_THRESHOLD) {
+            mLastPost = new Date(now);
+            return true;
+        }
+
+        return false;
+    }
+
+    private double getTotalVolume(String units) {
+        double retval = 0.0;
+        for (Pair<Double, String> pair : mDataBuffer) {
+            if (pair.second.equals(units)) {
+                retval += pair.first;
+            }
+        }
+
+        return retval;
+    }
+
+    private double getTotalVolume() {
+        return getTotalVolume(DEFAULT_UNITS);
+    }
+
     private Pair<Double, String> parseRawDeviceResponse(String rawData) {
-        final String defaultUnits = "fl oz";
-        final double defaultVolume = 0.0;
 
         if (rawData == null || "".equals(rawData)) {
-            return new Pair<>(defaultVolume, defaultUnits);
+            return new Pair<>(DEFAULT_VOLUME, DEFAULT_UNITS);
         }
 
         char delimiter = rawData.charAt(0);
         String[] parsed = rawData.substring(1).split(delimiter + "");
 
         if (parsed.length == 0) {
-            return new Pair<>(defaultVolume, defaultUnits);
+            return new Pair<>(DEFAULT_VOLUME, DEFAULT_UNITS);
         }
 
-        String units = (parsed.length >= 2) ? parsed[1] : defaultUnits;
+        String units = (parsed.length >= 2) ? parsed[1] : DEFAULT_UNITS;
         double volume = Double.parseDouble(parsed[0]);
 
         return new Pair<>(volume, units);
+    }
+
+    private JSONObject convertToJSON(double amount, String unit) {
+        JSONObject retval = new JSONObject();
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+            String dateString = sdf.format(new Date());
+
+            retval.put("date", dateString);
+            retval.put("amount", amount);
+            retval.put("unit", unit);
+
+        } catch (JSONException jsonOops) {
+            Log.d(TAG, "JSON Parsing failed. Oops.");
+        }
+
+        return retval;
     }
 
 
