@@ -47,6 +47,7 @@ public class Auth_Activity extends FragmentActivity {
         LOGGER.info("Test4");
 
     }
+
     public static class OAuthFragment extends Fragment implements
             LoaderManager.LoaderCallbacks<Result<Credential>> {
 
@@ -122,7 +123,7 @@ public class Auth_Activity extends FragmentActivity {
                     .build();
             // setup UI controller
             AuthorizationDialogController controller =
-                    new DialogFragmentController(getFragmentManager(), fullScreen) {
+                     new DialogFragmentController(getFragmentManager(), fullScreen) {
                         @Override
                         public String getRedirectUri() throws IOException {
                             return Auth_Constants.REDIRECT_URL;

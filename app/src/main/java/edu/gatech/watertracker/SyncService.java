@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.util.Pair;
 
 import com.adafruit.bluefruit.le.connect.app.UartDataChunk;
 import com.adafruit.bluefruit.le.connect.ble.BleDevicesScanner;
@@ -133,6 +134,8 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
                 //        Banjo tcan answer this question better.
                 for (UartDataChunk udc : mDataBuffer) {
                     Log.d(TAG, udc.getData());
+                    Pair<Double, String> parsed = parseRawDeviceResponse(udc.getData());
+                    Log.d(TAG, parsed.first.toString() + parsed.second);
                 }
 
                 ackDevice();
@@ -143,12 +146,36 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
         }
     }
 
+    private Pair<Double, String> parseRawDeviceResponse(String rawData) {
+        final String defaultUnits = "fl oz";
+        final double defaultVolume = 0.0;
+
+        if (rawData == null || "".equals(rawData)) {
+            return new Pair<>(defaultVolume, defaultUnits);
+        }
+
+        char delimiter = rawData.charAt(0);
+        String[] parsed = rawData.substring(1).split(delimiter + "");
+
+        if (parsed.length == 0) {
+            return new Pair<>(defaultVolume, defaultUnits);
+        }
+
+        String units = (parsed.length >= 2) ? parsed[1] : defaultUnits;
+        double volume = Double.parseDouble(parsed[0]);
+
+        return new Pair<>(volume, units);
+    }
+
+
     private void initSyncDevice() {
         uartSendData("S");
+        Log.d(TAG, "Sent: S");
     }
 
     private void ackDevice() {
         uartSendData("A");
+        Log.d(TAG, "Sent: A");
         try {
             Thread.sleep(500);
         } catch (Exception e) {
@@ -157,7 +184,6 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
 
         mBleManager.disconnect();
     }
-
 
     @Override
     public void onDataAvailable(BluetoothGattDescriptor descriptor) {
