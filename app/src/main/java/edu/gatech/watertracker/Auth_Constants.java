@@ -13,5 +13,6 @@ public class Auth_Constants {
     public static final String TOKEN_URL = "https://api.fitbit.com/oauth2/token";
     public static final String REDIRECT_URL = "https://www.google.com/";
     public static final List<String> SCOPES = Arrays.asList("nutrition");
+    public static String auth_token = null;
     private Auth_Constants() {}
 }

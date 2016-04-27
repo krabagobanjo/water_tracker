@@ -1,6 +1,7 @@
 package edu.gatech.watertracker;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -44,7 +45,6 @@ public class Auth_Activity extends FragmentActivity {
             OAuthFragment list = new OAuthFragment();
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
-        LOGGER.info("Test4");
 
     }
     public static class OAuthFragment extends Fragment implements
@@ -166,6 +166,7 @@ public class Auth_Activity extends FragmentActivity {
                                    Result<Credential> result) {
             if (loader.getId() == LOADER_GET_TOKEN) {
                 message.setText(result.success ? result.data.getAccessToken() : "");
+                Auth_Constants.auth_token = result.data.getAccessToken();
             } else {
                 message.setText("");
             }
@@ -180,6 +181,11 @@ public class Auth_Activity extends FragmentActivity {
             }
             getActivity().setProgressBarIndeterminateVisibility(false);
             button.setEnabled(true);
+            try {
+                this.finalize();
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
         }
 
         @Override
