@@ -135,7 +135,7 @@
     <string name="pinio_pintype_low">Low</string>
     <string name="pinio_pintype_high">High</string>
     <string name="pinio_pinname_digital_format">Pin %d</string>
-    <string name="pinio_pinname_analog_format" formatted = "false">Pin %d, Analog %d</string>
+    <string name="pinio_pinname_analog_format" formatted="false">Pin %d, Analog %d</string>
     <string name="pinio_tag_mode">Mode</string>
     <string name="pinio_help_title">Pin I/O Help</string>
 

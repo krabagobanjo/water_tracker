@@ -1,6 +1,7 @@
 package edu.gatech.watertracker;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -44,7 +45,6 @@ public class Auth_Activity extends FragmentActivity {
             OAuthFragment list = new OAuthFragment();
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
-        LOGGER.info("Test4");
 
     }
 
@@ -88,13 +88,13 @@ public class Auth_Activity extends FragmentActivity {
                                     OAuthFragment.this);
                         }
                     } else { // R.string.delete_token
-                        if (getLoaderManager().getLoader(LOADER_DELETE_TOKEN) == null) {
-                            getLoaderManager().initLoader(LOADER_DELETE_TOKEN, null,
-                                    OAuthFragment.this);
-                        } else {
-                            getLoaderManager().restartLoader(LOADER_DELETE_TOKEN, null,
-                                    OAuthFragment.this);
-                        }
+//                        if (getLoaderManager().getLoader(LOADER_DELETE_TOKEN) == null) {
+//                            getLoaderManager().initLoader(LOADER_DELETE_TOKEN, null,
+//                                    OAuthFragment.this);
+//                        } else {
+////                            getLoaderManager().restartLoader(LOADER_DELETE_TOKEN, null,
+////                                    OAuthFragment.this);
+//                        }
                     }
                 }
             });
@@ -166,7 +166,9 @@ public class Auth_Activity extends FragmentActivity {
         public void onLoadFinished(Loader<Result<Credential>> loader,
                                    Result<Credential> result) {
             if (loader.getId() == LOADER_GET_TOKEN) {
-                message.setText(result.success ? result.data.getAccessToken() : "");
+                String auth_tok = result.data.getAccessToken();
+                message.setText(result.success ? auth_tok : "");
+                Auth_Constants.auth_token = auth_tok;
             } else {
                 message.setText("");
             }
@@ -181,6 +183,9 @@ public class Auth_Activity extends FragmentActivity {
             }
             getActivity().setProgressBarIndeterminateVisibility(false);
             button.setEnabled(true);
+            Intent intent = new Intent(getActivity(), MainActivity.class);
+            startActivity(intent);
+            getActivity().finish();
         }
 
         @Override
