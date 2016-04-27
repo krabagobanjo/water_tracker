@@ -12,8 +12,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.api.client.http.GenericUrl;
 import com.wuman.android.auth.AuthorizationDialogController;
@@ -56,8 +54,8 @@ public class Auth_Activity extends FragmentActivity {
 
         private OAuthManager oauth;
 
-        private Button button;
-        private TextView message;
+//        private Button button;
+//        private TextView message;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -73,38 +71,19 @@ public class Auth_Activity extends FragmentActivity {
 
         @Override
         public void onViewCreated(View view, Bundle savedInstanceState) {
-            button = (Button) view.findViewById(android.R.id.button1);
-            setButtonText(R.string.get_token);
-            message = (TextView) view.findViewById(android.R.id.text1);
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (v.getTag().equals(R.string.get_token)) {
-                        if (getLoaderManager().getLoader(LOADER_GET_TOKEN) == null) {
-                            getLoaderManager().initLoader(LOADER_GET_TOKEN, null,
-                                    OAuthFragment.this);
-                        } else {
-                            getLoaderManager().restartLoader(LOADER_GET_TOKEN, null,
-                                    OAuthFragment.this);
-                        }
-                    } else { // R.string.delete_token
-//                        if (getLoaderManager().getLoader(LOADER_DELETE_TOKEN) == null) {
-//                            getLoaderManager().initLoader(LOADER_DELETE_TOKEN, null,
-//                                    OAuthFragment.this);
-//                        } else {
-////                            getLoaderManager().restartLoader(LOADER_DELETE_TOKEN, null,
-////                                    OAuthFragment.this);
-//                        }
-                    }
-                }
-            });
+            if (getLoaderManager().getLoader(LOADER_GET_TOKEN) == null) {
+                getLoaderManager().initLoader(LOADER_GET_TOKEN, null,
+                        OAuthFragment.this);
+            } else {
+                getLoaderManager().restartLoader(LOADER_GET_TOKEN, null,
+                        OAuthFragment.this);
+            }
         }
 
         @Override
         public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
-            boolean fullScreen = getActivity().getSharedPreferences("Preference", 0)
-                    .getBoolean("auth_mode", false);
+            boolean fullScreen = true;
             // setup credential store
             SharedPreferencesCredentialStore credentialStore =
                     new SharedPreferencesCredentialStore(getActivity(),
@@ -131,7 +110,7 @@ public class Auth_Activity extends FragmentActivity {
 
                         @Override
                         public boolean isJavascriptEnabledForWebView() {
-                            return true;
+                            return false;
                         }
 
                         @Override
@@ -151,9 +130,7 @@ public class Auth_Activity extends FragmentActivity {
 
         @Override
         public Loader<Result<Credential>> onCreateLoader(int id, Bundle args) {
-            getActivity().setProgressBarIndeterminateVisibility(true);
-            button.setEnabled(false);
-            message.setText("");
+//            getActivity().setProgressBarIndeterminateVisibility(true);
             if (id == LOADER_GET_TOKEN) {
                 return new GetTokenLoader(getActivity(), oauth);
             } else {
@@ -165,34 +142,21 @@ public class Auth_Activity extends FragmentActivity {
         @Override
         public void onLoadFinished(Loader<Result<Credential>> loader,
                                    Result<Credential> result) {
-            if (loader.getId() == LOADER_GET_TOKEN) {
+            if (result != null && result.data != null) {
                 String auth_tok = result.data.getAccessToken();
-                message.setText(result.success ? auth_tok : "");
                 Auth_Constants.auth_token = auth_tok;
+                Intent intent = new Intent(getActivity(), MainActivity.class);
+                startActivity(intent);
+                getActivity().finish();
             } else {
-                message.setText("");
+                getLoaderManager().restartLoader(LOADER_GET_TOKEN, null,
+                                    OAuthFragment.this);
             }
-            if (result.success) {
-                if (loader.getId() == LOADER_GET_TOKEN) {
-                    setButtonText(R.string.delete_token);
-                } else {
-                    setButtonText(R.string.get_token);
-                }
-            } else {
-                setButtonText(R.string.get_token);
-            }
-            getActivity().setProgressBarIndeterminateVisibility(false);
-            button.setEnabled(true);
-            Intent intent = new Intent(getActivity(), MainActivity.class);
-            startActivity(intent);
-            getActivity().finish();
         }
 
         @Override
         public void onLoaderReset(Loader<Result<Credential>> loader) {
-            message.setText("");
-            getActivity().setProgressBarIndeterminateVisibility(false);
-            button.setEnabled(true);
+
         }
 
         @Override
@@ -202,10 +166,6 @@ public class Auth_Activity extends FragmentActivity {
             super.onDestroy();
         }
 
-        private void setButtonText(int action) {
-            button.setText(action);
-            button.setTag(action);
-        }
 
         private static class GetTokenLoader extends AsyncResourceLoader<Credential> {
 
