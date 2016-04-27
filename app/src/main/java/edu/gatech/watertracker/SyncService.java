@@ -147,10 +147,11 @@ public class SyncService extends IntentService implements BleManager.BleManagerL
                 if (isReadyToPost()) {
                     double totalVolume = getTotalVolume(DEFAULT_UNITS);
                     JSONObject params = convertToJSON(totalVolume, DEFAULT_UNITS);
-                    // Insert RestHandler here.
-                    // ...
-                    // if (post.isSuccessful())
-                    mDataBuffer.clear();
+
+                    RestHandler rest = new RestHandler();
+                    if (rest.post(params, Auth_Constants.auth_token) != -1) {
+                        mDataBuffer.clear();
+                    }
                 }
 
                 // We can either post the data to fitbit immediately, or we can wait for a certain
